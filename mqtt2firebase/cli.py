@@ -1,35 +1,35 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import click
 import paho.mqtt.client as mqtt
-import yaml
 import firebase.firebase as f
 import schedule
 import time
 
 
-def main():
+@click.command()
+@click.option("--firebase", "-f", help="Firebase url", required=True)
+@click.option("--host", "-h", help="MQTT broker host", required=False, default="localhost")
+@click.option("--port", "-p", help="MQTT broker port", required=False, default=1883)
+@click.option("--delay", "-d", help="Delay between reporting data to firebase", required=False, default=10)
+def main(firebase, host, port, delay):
     values = {}
 
-    config_data = yaml.load(open("config.yaml", "r"), yaml.CLoader)
-
-    config_firebase = config_data.get("firebase")
-    config_connection = config_data.get("connection")
-
-    firebase = f.FirebaseApplication(config_firebase["url"], None)
+    firebase = f.FirebaseApplication(firebase, None)
 
     def patch_to_firebase():
-        print("\n=== Firebase patch ===")
+        print("\n=== Firebase patch ===\n")
         firebase.patch("sensors/ronny/", values)
 
     def on_connect(mqttc, obj, flags, rc):
         print("Connected")
-        mqttc.subscribe("sensor/ronny/#", 0)
+        mqttc.subscribe("node/#", 0)
 
     def on_message(mqttc, obj, msg):
         str_payload = str(msg.payload, "utf-8")
         split_topic = msg.topic.split("/")
-        quantitie = split_topic[2]
+        quantitie = split_topic[4]
 
         print("Now came:\n  Topic: {0}\n  Payload: {1}\n".
               format(msg.topic, str_payload))
@@ -41,16 +41,11 @@ def main():
     mqttc = mqtt.Client()
     mqttc.on_message = on_message
     mqttc.on_connect = on_connect
-    mqttc.connect(config_connection["host"], int(config_connection["port"]))
+    mqttc.connect(host, port)
     mqttc.loop_start()
 
-    schedule.every(config_firebase["reporting_frequency"]
-                   ).seconds.do(patch_to_firebase)
+    schedule.every(delay).seconds.do(patch_to_firebase)
 
     while True:
         schedule.run_pending()
         time.sleep(1)
-
-
-if __name__ == "__main__":
-    main()

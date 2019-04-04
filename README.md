@@ -2,27 +2,27 @@
 Bridge between mqtt messages and Google Realtime Firebase
 
 ## Install
-
 ```
-sudo pip3 install -r requirements.txt
+sudo pip3 install -e .
 ```
 
 ## Use
+First install and run [bcg tool](https://github.com/bigclownlabs/bch-gateway)
 
-Edit config file to specific mqtt broker and firebase realtime database url. Then run script.
-
-config.yaml file example
 
 ```
-connection:
-  host: 127.0.0.1
-  port: 1883
-
-firebase:
-  url: https://yourdatabase.firebaseio.com/
+mqtt2firebase -f https://your-firebase.firebaseio.com/
 ```
 
-Run
+You can specify many things with arguments
 ```
-python3 run.py
+>>> mqtt2firebase --help
+Usage: mqtt2firebase [OPTIONS]
+
+Options:
+  -f, --firebase TEXT  Firebase url  [required]
+  -h, --host TEXT      MQTT broker host
+  -p, --port INTEGER   MQTT broker port
+  -d, --delay INTEGER  Delay between reporting data to firebase
+  --help               Show this message and exit.
 ```
